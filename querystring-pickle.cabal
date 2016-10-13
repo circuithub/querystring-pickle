@@ -48,7 +48,7 @@ test-suite querystring-pickle-tests
         -fwarn-tabs
 
     build-depends:
-        base                       >= 4.6 && < 5
+        base                       >= 4.6 && < 4.10
       , bytestring
       , querystring-pickle
       , QuickCheck                 >= 2.5
