@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                             #-}
 {-# LANGUAGE DefaultSignatures               #-}
 {-# LANGUAGE DeriveGeneric                   #-}
 {-# LANGUAGE FlexibleContexts                #-}
@@ -345,7 +346,9 @@ instance (Selector s, IsQuery a) => RecIsQuery (S1 s (K1 i (Maybe a))) where
 class IsRecord (f :: * -> *) isRecord | f -> isRecord
 
 instance (IsRecord f isRecord) => IsRecord (f :*: g) isRecord
+#if !MIN_VERSION_base(4,9,0)
 instance IsRecord (M1 S NoSelector f) False
+#endif
 instance (IsRecord f isRecord) => IsRecord (M1 S c f) isRecord
 instance IsRecord (K1 i c) True
 instance IsRecord U1 False
