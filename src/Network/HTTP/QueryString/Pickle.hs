@@ -130,12 +130,14 @@ instance Ord Query where
 
     compare _ _ = LT
 
+instance Semigroup Query where
+    (<>) (List l) (List r) = List $ l ++ r
+    (<>) (List l) r        = List $ r : l
+    (<>) l        (List r) = List $ l : r
+    (<>) l        r        = List [l, r]
+
 instance Monoid Query where
     mempty                    = List []
-    mappend (List l) (List r) = List $ l ++ r
-    mappend (List l) r        = List $ r : l
-    mappend l        (List r) = List $ l : r
-    mappend l        r        = List [l, r]
 
 -- | Pairing of pickler to unpickler.
 data QueryPU a = QueryPU
