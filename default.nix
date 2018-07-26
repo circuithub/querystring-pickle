@@ -4,7 +4,7 @@
 mkDerivation {
   pname = "querystring-pickle";
   version = "0.2.0";
-  src = ./.;
+  src = import ../../nix/cabal-sdist.nix ./.;
   libraryHaskellDepends = [ base bytestring text ];
   testHaskellDepends = [
     base bytestring QuickCheck test-framework
