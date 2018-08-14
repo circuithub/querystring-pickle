@@ -1,6 +1,5 @@
 {-# LANGUAGE CPP                             #-}
 {-# LANGUAGE DefaultSignatures               #-}
-{-# LANGUAGE DeriveGeneric                   #-}
 {-# LANGUAGE FlexibleContexts                #-}
 {-# LANGUAGE FlexibleInstances               #-}
 {-# LANGUAGE FunctionalDependencies          #-}
@@ -212,7 +211,7 @@ fromQuery = unpickle queryPickler . foldl' (\a b -> reify b <> a) mempty
     reify (k, v)
         | BS.null k       = Value v
         | '.' `BS.elem` k = let ks     = BS.split '.' k
-                                f k' q = Pair k' q
+                                f      = Pair
                              in foldr f (Pair (last ks) $ Value v) $ init ks
         | otherwise       = Pair k $ Value v
 
@@ -238,7 +237,7 @@ decodeQuery f = map (pair . BS.split '=')
 --
 
 genericQueryPickler opts =
-    (to, from) `qpWrap` (gQueryPickler opts) (genericQueryPickler opts)
+    (to, from) `qpWrap` gQueryPickler opts (genericQueryPickler opts)
 
 class GIsQuery f where
     gQueryPickler :: QueryOptions -> PU a -> PU (f a)
@@ -264,7 +263,7 @@ instance ( AllNullary  (a :+: b) allNullary
          ) => GIsQuery (a :+: b) where
     -- Nullary Constructors
     gQueryPickler opts =
-        (unTagged :: Tagged allNullary (PU ((a :+: b) d)) -> (PU ((a :+: b) d)))
+        (unTagged :: Tagged allNullary (PU ((a :+: b) d)) -> PU ((a :+: b) d))
             . nullQueryPickler opts
 
 --
@@ -278,7 +277,7 @@ instance SumIsQuery (a :+: b) => NullIsQuery (a :+: b) True where
     nullQueryPickler opts _ = Tagged $ sumQueryPickler opts
 
 instance (GIsQuery a, GIsQuery b) => NullIsQuery (a :+: b) False where
-    nullQueryPickler opts f = Tagged $
+    nullQueryPickler opts f = Tagged
         (gQueryPickler opts f `qpSum` gQueryPickler opts f)
 
 class SumIsQuery f where
