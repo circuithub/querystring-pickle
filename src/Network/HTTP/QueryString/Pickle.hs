@@ -253,7 +253,7 @@ instance GIsQuery a => GIsQuery (M1 i d a) where
     -- Discard Metadata
     gQueryPickler opts = qpWrap (M1, unM1) . gQueryPickler opts
 
-instance CtorIsQuery a => GIsQuery (C1 c a) where
+instance {-# OVERLAPPING #-} CtorIsQuery a => GIsQuery (C1 c a) where
     -- Constructor Encoding
     gQueryPickler opts = qpWrap (M1, unM1) . ctorQueryPickler opts
 
@@ -286,7 +286,7 @@ class SumIsQuery f where
 instance (SumIsQuery a, SumIsQuery b) => SumIsQuery (a :+: b) where
     sumQueryPickler opts = sumQueryPickler opts `qpSum` sumQueryPickler opts
 
-instance Constructor c => SumIsQuery (C1 c U1) where
+instance {-# OVERLAPPING #-} Constructor c => SumIsQuery (C1 c U1) where
     sumQueryPickler opts = QueryPU
         { pickle   = const $ Value name
         , unpickle = valueExists
@@ -332,7 +332,7 @@ instance (Selector s, GIsQuery a) => RecIsQuery (S1 s a) where
         (BS.pack . queryFieldModifier opts $ selName (undefined :: S1 s a r))
         ((M1, unM1) `qpWrap` gQueryPickler opts f)
 
-instance (Selector s, IsQuery a) => RecIsQuery (S1 s (K1 i (Maybe a))) where
+instance {-# OVERLAPPING #-} (Selector s, IsQuery a) => RecIsQuery (S1 s (K1 i (Maybe a))) where
     recQueryPickler opts _ =
         (M1 . K1, unK1 . unM1) `qpWrap` qpOption (qpElem name queryPickler)
       where
