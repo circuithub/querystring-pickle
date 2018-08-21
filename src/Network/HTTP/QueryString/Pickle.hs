@@ -5,7 +5,6 @@
 {-# LANGUAGE FunctionalDependencies          #-}
 {-# LANGUAGE KindSignatures                  #-}
 {-# LANGUAGE MultiParamTypeClasses           #-}
-{-# LANGUAGE OverlappingInstances            #-}
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE ScopedTypeVariables             #-}
 {-# LANGUAGE TypeOperators                   #-}
@@ -68,7 +67,6 @@ import           Data.Char             (isUpper, isLower, toLower)
 import           Data.Either
 import           Data.Foldable         (foldl')
 import           Data.List             (sort)
-import           Data.Monoid
 import           Data.Text             (Text)
 import           Data.Text.Encoding
 import           GHC.Generics
@@ -236,8 +234,9 @@ decodeQuery f = map (pair . BS.split '=')
 -- Generics
 --
 
+genericQueryPickler :: forall x. (Generic x, GIsQuery (Rep x)) => QueryOptions -> PU x
 genericQueryPickler opts =
-    (to, from) `qpWrap` gQueryPickler opts (genericQueryPickler opts)
+    (to, from) `qpWrap` gQueryPickler opts (genericQueryPickler opts :: PU x)
 
 class GIsQuery f where
     gQueryPickler :: QueryOptions -> PU a -> PU (f a)
@@ -258,7 +257,8 @@ instance CtorIsQuery a => GIsQuery (C1 c a) where
     -- Constructor Encoding
     gQueryPickler opts = qpWrap (M1, unM1) . ctorQueryPickler opts
 
-instance ( AllNullary  (a :+: b) allNullary
+instance ( AllNullary a allNullaryL, AllNullary b allNullaryR
+         , And allNullaryL allNullaryR allNullary
          , NullIsQuery (a :+: b) allNullary
          ) => GIsQuery (a :+: b) where
     -- Nullary Constructors
@@ -273,7 +273,7 @@ instance ( AllNullary  (a :+: b) allNullary
 class NullIsQuery f allNullary where
     nullQueryPickler :: QueryOptions -> PU a -> Tagged allNullary (PU (f a))
 
-instance SumIsQuery (a :+: b) => NullIsQuery (a :+: b) True where
+instance (SumIsQuery a, SumIsQuery b) => NullIsQuery (a :+: b) True where
     nullQueryPickler opts _ = Tagged $ sumQueryPickler opts
 
 instance (GIsQuery a, GIsQuery b) => NullIsQuery (a :+: b) False where
